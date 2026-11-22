@@ -44,7 +44,7 @@ function normalizeParams(raw: Partial<FemParams>): FemParams {
 }
 
 async function computeCaseKey(p: FemParams): Promise<string> {
-  const canonical = `f16fem|g=${p.g_load.toFixed(0)}|v=${p.speed_ms.toFixed(0)}|mat=${p.material}`;
+  const canonical = `f16fem2|g=${p.g_load.toFixed(0)}|v=${p.speed_ms.toFixed(0)}|mat=${p.material}`;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical));
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, '0'))

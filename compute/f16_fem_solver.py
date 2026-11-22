@@ -90,8 +90,80 @@ class F16FemParams:
 
     def case_key(self) -> str:
         p = self.normalized()
-        canonical = f"f16fem|g={p.g_load:.0f}|v={p.speed_ms:.0f}|mat={p.material}"
+        canonical = f"f16fem2|g={p.g_load:.0f}|v={p.speed_ms:.0f}|mat={p.material}"
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
+
+
+def _refine_wing_and_tail_conformal(
+    nodes: np.ndarray,
+    tris: np.ndarray,
+    target_wing_tail: float = 0.34,
+    target_fuselage: float = 0.65,
+    max_passes: int = 7,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Conformal adaptive longest-edge refinement (zero hanging nodes / cracks):
+    densifies wings, horizontal tailplanes, and vertical fin ~12x into smooth,
+    well-shaped FEM shell triangles while keeping fuselage balanced & fast.
+    """
+    n = nodes
+    t = tris
+    for _ in range(max_passes):
+        e01 = np.sort(t[:, [0, 1]], axis=1)
+        e12 = np.sort(t[:, [1, 2]], axis=1)
+        e20 = np.sort(t[:, [2, 0]], axis=1)
+        uniq_e, inv = np.unique(np.vstack([e01, e12, e20]), axis=0, return_inverse=True)
+        mids = 0.5 * (n[uniq_e[:, 0]] + n[uniq_e[:, 1]])
+        lens = np.linalg.norm(n[uniq_e[:, 1]] - n[uniq_e[:, 0]], axis=1)
+
+        is_wt = (np.abs(mids[:, 1]) > 0.65) | (mids[:, 0] > 3.2) | (mids[:, 2] > 1.05)
+        split_mask = lens > np.where(is_wt, target_wing_tail, target_fuselage)
+        if not np.any(split_mask):
+            break
+
+        n_new = int(np.sum(split_mask))
+        mid_id = np.full(len(uniq_e), -1, dtype=np.int32)
+        mid_id[split_mask] = np.arange(len(n), len(n) + n_new, dtype=np.int32)
+        n = np.vstack([n, mids[split_mask]])
+
+        nt = len(t)
+        m01 = mid_id[inv[:nt]]
+        m12 = mid_id[inv[nt : 2 * nt]]
+        m20 = mid_id[inv[2 * nt :]]
+        l01 = lens[inv[:nt]]
+        l12 = lens[inv[nt : 2 * nt]]
+        l20 = lens[inv[2 * nt :]]
+
+        new_t = []
+        for i in range(nt):
+            a, b, c = int(t[i, 0]), int(t[i, 1]), int(t[i, 2])
+            s0, s1, s2 = int(m01[i]), int(m12[i]), int(m20[i])
+            cnt = (s0 >= 0) + (s1 >= 0) + (s2 >= 0)
+            if cnt == 0:
+                new_t.append((a, b, c))
+            elif cnt == 3:
+                new_t.extend([(a, s0, s2), (s0, b, s1), (s2, s1, c), (s0, s1, s2)])
+            elif cnt == 1:
+                if s0 >= 0:
+                    new_t.extend([(a, s0, c), (s0, b, c)])
+                elif s1 >= 0:
+                    new_t.extend([(a, b, s1), (a, s1, c)])
+                else:
+                    new_t.extend([(a, b, s2), (s2, b, c)])
+            else:
+                # 2 edges split: rotate so unsplit edge is (c, a)
+                if s0 < 0:
+                    a, b, c, s0, s1, s2, l0, l1 = b, c, a, s1, s2, s0, l12[i], l20[i]
+                elif s1 < 0:
+                    a, b, c, s0, s1, s2, l0, l1 = c, a, b, s2, s0, s1, l20[i], l01[i]
+                else:
+                    l0, l1 = l01[i], l12[i]
+                if l0 >= l1:
+                    new_t.extend([(a, s0, c), (s0, b, s1), (s0, s1, c)])
+                else:
+                    new_t.extend([(a, s0, s1), (s0, b, s1), (a, s1, c)])
+        t = np.asarray(new_t, dtype=np.int32)
+    return n, t
 
 
 def _load_f16_shell_mesh(stl_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float]:
@@ -138,6 +210,11 @@ def _load_f16_shell_mesh(stl_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
     areas = 0.5 * np.linalg.norm(np.cross(p1 - p0, p2 - p0), axis=1)
     tris = tris[areas > 1e-8]
 
+    # Conformal adaptive mesh refinement: 12x finer on wings, horizontal tails & vertical fin!
+    nodes, tris = _refine_wing_and_tail_conformal(
+        nodes, tris, target_wing_tail=0.34, target_fuselage=0.65, max_passes=7
+    )
+
     # Identify connected sub-assemblies (fuselage, wings, horizontal tails, vertical fin)
     n_nodes = nodes.shape[0]
     r_adj = np.concatenate([tris[:, 0], tris[:, 1], tris[:, 2], tris[:, 1], tris[:, 2], tris[:, 0]])
@@ -157,11 +234,11 @@ def _load_f16_shell_mesh(stl_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
             for c_b in range(c_a + 1, n_comp):
                 idx_b = np.where(comp_labels == c_b)[0]
                 dists, nn = tree_a.query(nodes[idx_b], k=1)
-                close = np.where(dists < 0.35)[0]
+                close = np.where(dists < 0.25)[0]
                 for loc_b in close:
                     tie_pairs_list.append((int(idx_a[nn[loc_b]]), int(idx_b[loc_b])))
 
-        # Guarantee every non-main component is solidly bolted to the rest of the airframe
+        # Guarantee every non-main component is solidly bolted along its root interface
         for c_sub in range(n_comp):
             if c_sub == main_comp:
                 continue
@@ -169,7 +246,7 @@ def _load_f16_shell_mesh(stl_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
             idx_other = np.where(comp_labels != c_sub)[0]
             tree_o = cKDTree(nodes[idx_other])
             dists, nn = tree_o.query(nodes[idx_sub], k=1)
-            best_k = np.argsort(dists)[: min(28, len(idx_sub))]
+            best_k = np.argsort(dists)[: min(75, len(idx_sub))]
             for loc in best_k:
                 tie_pairs_list.append((int(idx_sub[loc]), int(idx_other[nn[loc]])))
 
