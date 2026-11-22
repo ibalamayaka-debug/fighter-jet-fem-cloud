@@ -1,5 +1,6 @@
 export type MaterialId = 'al7075' | 'ti6al4v' | 'cfrp';
 export type FemFieldId = 'von_mises_mpa' | 'strain_micro' | 'disp_mm';
+export type FemPaletteId = 'rainbow' | 'thermal';
 
 export interface F16FemParams {
   g_load: number;
@@ -57,6 +58,7 @@ export interface F16FemSimResponse {
 
 export interface F16FemViewState {
   field: FemFieldId;
+  palette: FemPaletteId;
   warpScale: number;
   playing: boolean;
   showGhost: boolean;

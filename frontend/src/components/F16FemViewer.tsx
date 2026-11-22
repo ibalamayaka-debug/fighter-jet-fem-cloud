@@ -24,6 +24,19 @@ interface F16FemViewerProps {
 
 type RGB = [number, number, number];
 
+const RAINBOW_PALETTE: { stops: Array<[number, RGB]>; css: string } = {
+  // Classic ANSYS / Abaqus CAE Rainbow: Blue -> Cyan -> Green -> Yellow -> Orange -> Red
+  stops: [
+    [0.0, [20, 62, 204]],
+    [0.24, [0, 176, 245]],
+    [0.48, [34, 204, 102]],
+    [0.72, [250, 212, 24]],
+    [0.88, [249, 115, 22]],
+    [1.0, [220, 28, 38]],
+  ],
+  css: 'linear-gradient(90deg, #143ecc 0%, #00b0f5 24%, #22cc66 48%, #fad418 72%, #f97316 88%, #dc1c26 100%)',
+};
+
 const FIELD_PALETTES: Record<FemFieldId, { stops: Array<[number, RGB]>; css: string }> = {
   // Inferno/Ember stress map: deep indigo -> plum -> fiery orange -> incandescent gold-white
   von_mises_mpa: {
@@ -154,7 +167,8 @@ export const F16FemViewer: React.FC<F16FemViewerProps> = ({
       const [lo, hi] = getFieldRange(res, v.field);
       setFieldMax(hi);
 
-      applyStopsToLut(s.lut, FIELD_PALETTES[v.field].stops, lo, hi);
+      const palCfg = v.palette === 'rainbow' ? RAINBOW_PALETTE : FIELD_PALETTES[v.field];
+      applyStopsToLut(s.lut, palCfg.stops, lo, hi);
 
       s.femMapper.setColorByArrayName(v.field);
       s.femMapper.setScalarRange(lo, hi);
@@ -425,7 +439,7 @@ export const F16FemViewer: React.FC<F16FemViewerProps> = ({
     }
   }, [result, view, applyView]);
 
-  const pal = FIELD_PALETTES[view.field];
+  const pal = view.palette === 'rainbow' ? RAINBOW_PALETTE : FIELD_PALETTES[view.field];
 
   return (
     <div className="viewer-shell">

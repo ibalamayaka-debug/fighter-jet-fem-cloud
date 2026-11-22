@@ -39,6 +39,9 @@ export const TRANSLATIONS = {
     runningBtn: 'Modal 云端有限元求解中...',
     sectionVisual: '3D 应力应变与变形可视化',
     fieldLabel: '云图物理场 (0ms 瞬切)',
+    paletteLabel: '云图配色方案',
+    paletteRainbow: '🌈 经典彩虹 (CAE)',
+    paletteThermal: '🔥 熔岩热图',
     fields: {
       von_mises_mpa: '冯·米塞斯应力 (MPa)',
       strain_micro: '等效应变 (με)',
@@ -103,6 +106,9 @@ export const TRANSLATIONS = {
     runningBtn: 'Solving 3D FEM on Modal...',
     sectionVisual: '3D Stress, Strain & Deformation',
     fieldLabel: 'Contour Field (Instant Switch)',
+    paletteLabel: 'Contour Color Palette',
+    paletteRainbow: '🌈 CAE Rainbow',
+    paletteThermal: '🔥 Thermal Ember',
     fields: {
       von_mises_mpa: 'von Mises Stress (MPa)',
       strain_micro: 'Equivalent Strain (με)',

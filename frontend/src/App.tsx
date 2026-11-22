@@ -38,6 +38,7 @@ export const App: React.FC = () => {
   const [params, setParams] = useState<F16FemParams>(DEFAULT_PARAMS);
   const [view, setView] = useState<F16FemViewState>({
     field: 'von_mises_mpa',
+    palette: 'rainbow',
     warpScale: 2.0,
     playing: true,
     showGhost: true,
@@ -228,6 +229,26 @@ export const App: React.FC = () => {
               <option value="disp_mm">{t.fields.disp_mm}</option>
             </select>
           </label>
+
+          <div className="select-row">
+            <span>{t.paletteLabel}</span>
+            <div className="palette-switch">
+              <button
+                type="button"
+                className={view.palette === 'rainbow' ? 'active' : ''}
+                onClick={() => setView({ ...view, palette: 'rainbow' })}
+              >
+                {t.paletteRainbow}
+              </button>
+              <button
+                type="button"
+                className={view.palette === 'thermal' ? 'active' : ''}
+                onClick={() => setView({ ...view, palette: 'thermal' })}
+              >
+                {t.paletteThermal}
+              </button>
+            </div>
+          </div>
 
           <label className="slider-row">
             <div className="slider-header">
