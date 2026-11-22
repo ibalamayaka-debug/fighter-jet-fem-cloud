@@ -1,0 +1,147 @@
+export type Lang = 'zh' | 'en';
+
+export function detectInitialLang(): Lang {
+  try {
+    const q = new URLSearchParams(window.location.search).get('lang');
+    if (q === 'zh' || q === 'en') return q;
+    const saved = localStorage.getItem('f16fem_lang');
+    if (saved === 'zh' || saved === 'en') return saved;
+  } catch {
+    // ignore
+  }
+  if (typeof navigator !== 'undefined' && navigator.language) {
+    return navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  }
+  return 'zh';
+}
+
+export const TRANSLATIONS = {
+  zh: {
+    pageTitle: 'F-16 战斗机 3D 有限元应力应变云实验室 — Cloud FEM',
+    badge: 'F-16 1:1 CAD · 云端 3D 四面体 FEM + OpenFOAM FSI',
+    title: 'F-16 战机应力应变云 FEM',
+    subtitle: 'Gmsh 3D 四面体有限元 + OpenFOAM 单向气动耦合 · 实时翼尖弯曲与冯·米塞斯应力分析',
+    sectionLoad: '机动过载与航空材料',
+    presets: {
+      pull9g: '9G 极限格斗拉起 (铝合金)',
+      turn5g: '5G 高速盘旋机动 (钛合金)',
+      neg3g: '-3G 负过载俯冲 (碳纤维)',
+    },
+    gLoad: '过载系数 Nz (G-Load)',
+    speed: '飞行空速 v',
+    material: '机身结构材料',
+    matOptions: {
+      al7075: '7075-T6 航空铝合金 (E=71.7 GPa, σy=503 MPa)',
+      ti6al4v: 'Ti-6Al-4V 航空钛合金 (E=113.8 GPa, σy=880 MPa)',
+      cfrp: 'T800 碳纤维复合材料 (E=135 GPa, σy=1100 MPa)',
+    },
+    runBtn: '云端 3D FEM 实时求解',
+    runningBtn: 'Modal 云端有限元求解中...',
+    sectionVisual: '3D 应力应变与变形可视化',
+    fieldLabel: '云图物理场 (0ms 瞬切)',
+    fields: {
+      von_mises_mpa: '冯·米塞斯应力 (MPa)',
+      strain_micro: '等效应变 (με)',
+      disp_mm: '结构变形位移 (mm)',
+    },
+    warpScale: '翼面弯曲放大倍率',
+    showGhost: '叠加未变形原机参考线框',
+    showMeshEdges: '显示 3D 有限元网格边线',
+    showInternalSlice: '显示机翼内部四面体应力剖面',
+    footerNote: '100% 云端 Gmsh 3D 网格 + SciPy 稀疏刚度矩阵 Ku=f（等效薄壁翼盒刚度模型）',
+    kpiStress: '峰值等效应力 σ_vM',
+    kpiSafety: '屈服安全系数 SF',
+    kpiStrain: '峰值等效应变 ε_eq',
+    kpiTip: '翼尖弯曲位移 Δz',
+    kpiSource: '云端网格 / 耗时',
+    safeOk: '安全',
+    safeWarn: '临界',
+    safeDanger: '超屈服',
+    hitSaved: (tets: number, s: string) => `${(tets / 1000).toFixed(1)}k 单元 · KV 秒开 (${s}s)`,
+    freshTime: (tets: number, s: string) => `${(tets / 1000).toFixed(1)}k 单元 · ${s}s`,
+    cachedStrip: '云端已缓存 FEM 工况（0ms 秒开）：',
+    playBend: '播放弹性弯曲',
+    pauseBend: '暂停变形动画',
+    camIso: '3D 战机视角',
+    camFront: '正面机翼弯曲',
+    camTop: '翼面俯视 XY',
+    camRoot: '翼根应力集中',
+    colorbarUnit: {
+      von_mises_mpa: 'MPa',
+      strain_micro: 'με',
+      disp_mm: 'mm',
+    },
+    hint: '左键 360° 旋转 · 滚轮缩放 · Shift+左键平移',
+    loadingCloud: '正在 Modal 云端构建 F-16 3D 四面体有限元并求解 Ku=f...',
+    loadingCloudDesc: 'Gmsh 三维体网格 → 映射 OpenFOAM 气动载荷 → 3D 线弹性刚度求解（约 2–5s）',
+    loadingVtp: '正在加载 F-16 3D 有限元应力与变形场...',
+    emptyTitle: '选择过载工况并点击“云端 3D FEM 实时求解”',
+    hideSidebar: '收起侧边栏',
+    showSidebar: '展开侧边栏',
+    tonnesUnit: '吨力',
+  },
+  en: {
+    pageTitle: 'F-16 Fighter Jet 3D Cloud FEM — Stress, Strain & Aero-Elasticity',
+    badge: 'F-16 1:1 CAD · Cloud 3D Tet FEM + OpenFOAM FSI',
+    title: 'F-16 Structural Cloud FEM',
+    subtitle: 'Gmsh 3D tetrahedral FEM + 1-way OpenFOAM aero-load · von Mises stress, strain & wing bend',
+    sectionLoad: 'Maneuver Load & Airframe Alloy',
+    presets: {
+      pull9g: '9G Combat Pull-Up (7075-T6 Al)',
+      turn5g: '5G High-Speed Turn (Ti-6Al-4V)',
+      neg3g: '-3G Negative Push-Over (CFRP)',
+    },
+    gLoad: 'Load Factor Nz (G-Load)',
+    speed: 'Airspeed v',
+    material: 'Airframe Structural Alloy',
+    matOptions: {
+      al7075: '7075-T6 Aerospace Aluminum (E=71.7 GPa, σy=503 MPa)',
+      ti6al4v: 'Ti-6Al-4V Titanium Alloy (E=113.8 GPa, σy=880 MPa)',
+      cfrp: 'T800 Carbon Fiber Composite (E=135 GPa, σy=1100 MPa)',
+    },
+    runBtn: 'Run Cloud 3D FEM',
+    runningBtn: 'Solving 3D FEM on Modal...',
+    sectionVisual: '3D Stress, Strain & Deformation',
+    fieldLabel: 'Contour Field (Instant Switch)',
+    fields: {
+      von_mises_mpa: 'von Mises Stress (MPa)',
+      strain_micro: 'Equivalent Strain (με)',
+      disp_mm: 'Displacement Magnitude (mm)',
+    },
+    warpScale: 'Deformation Exaggeration',
+    showGhost: 'Overlay Undeformed Reference Wireframe',
+    showMeshEdges: 'Show 3D FEM Mesh Edges',
+    showInternalSlice: 'Show Internal Wing-Spar Tet Slice',
+    footerNote: '100% Cloud Gmsh 3D Tet Mesh + Exact Ku=f FEM (Equivalent Wing-Box Stiffness)',
+    kpiStress: 'Peak von Mises Stress',
+    kpiSafety: 'Yield Safety Factor',
+    kpiStrain: 'Peak Equiv. Strain',
+    kpiTip: 'Wingtip Deflection Δz',
+    kpiSource: '3D Mesh / Solve',
+    safeOk: 'SAFE',
+    safeWarn: 'MARGINAL',
+    safeDanger: 'YIELD',
+    hitSaved: (tets: number, s: string) => `${(tets / 1000).toFixed(1)}k tets · KV HIT (${s}s)`,
+    freshTime: (tets: number, s: string) => `${(tets / 1000).toFixed(1)}k tets · ${s}s`,
+    cachedStrip: 'Cached Cloud FEM Cases (Instant Load):',
+    playBend: 'Animate Bending',
+    pauseBend: 'Pause Bending',
+    camIso: '3D Isometric',
+    camFront: 'Front Wing Flex',
+    camTop: 'Top Planform',
+    camRoot: 'Wing Root Zoom',
+    colorbarUnit: {
+      von_mises_mpa: 'MPa',
+      strain_micro: 'με',
+      disp_mm: 'mm',
+    },
+    hint: 'Drag: 360° Orbit · Scroll: Zoom · Shift+Drag: Pan',
+    loadingCloud: 'Running 3D Tetrahedral F-16 FEM on Modal Cloud...',
+    loadingCloudDesc: 'Gmsh 3D volume mesh → OpenFOAM 1-way FSI aero load → Sparse Ku=f solve (~2–5s)',
+    loadingVtp: 'Loading F-16 3D FEM stress & displacement mesh...',
+    emptyTitle: 'Choose a maneuver load and click "Run Cloud 3D FEM"',
+    hideSidebar: 'Hide sidebar',
+    showSidebar: 'Show sidebar',
+    tonnesUnit: 'tf',
+  },
+} as const;

@@ -1,0 +1,16 @@
+name = "f16-fem-worker"
+main = "src/index.ts"
+compatibility_date = "2025-03-01"
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "F16_FEM_KV"
+id = "0a08e284b39e40b1b7d6cf880d2d7c9c"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "881e01edca014d0c8236b3c61688a937"
+
+[vars]
+ALLOWED_ORIGIN = "*"
+MAX_RUNS_PER_IP_PER_HOUR = "15"
