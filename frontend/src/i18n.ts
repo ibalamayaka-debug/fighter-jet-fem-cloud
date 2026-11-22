@@ -18,9 +18,9 @@ export function detectInitialLang(): Lang {
 export const TRANSLATIONS = {
   zh: {
     pageTitle: 'F-16 战斗机 3D 有限元应力应变云实验室 — Cloud FEM',
-    badge: 'F-16 1:1 CAD · 云端 3D 四面体 FEM + OpenFOAM FSI',
+    badge: 'F-16 1:1 CAD · 云端 3D 壳体 FEM + OpenFOAM FSI',
     title: 'F-16 战机应力应变云 FEM',
-    subtitle: 'Gmsh 3D 四面体有限元 + OpenFOAM 单向气动耦合 · 实时翼尖弯曲与冯·米塞斯应力分析',
+    subtitle: '航空蒙皮壳体 6-DOF 有限元 + OpenFOAM 单向气动耦合 · 翼尖弯曲与冯·米塞斯应力',
     sectionLoad: '机动过载与航空材料',
     presets: {
       pull9g: '9G 极限格斗拉起 (铝合金)',
@@ -47,8 +47,8 @@ export const TRANSLATIONS = {
     warpScale: '翼面弯曲放大倍率',
     showGhost: '叠加未变形原机参考线框',
     showMeshEdges: '显示 3D 有限元网格边线',
-    showInternalSlice: '显示机翼内部四面体应力剖面',
-    footerNote: '100% 云端 Gmsh 3D 网格 + SciPy 稀疏刚度矩阵 Ku=f（等效薄壁翼盒刚度模型）',
+    showInternalSlice: '高亮机翼主梁与翼盒高应力区',
+    footerNote: '100% 云端 3D 蒙皮壳体有限元（6-DOF CTRIA3 壳单元 · 稀疏刚度矩阵 Ku=f）',
     kpiStress: '峰值等效应力 σ_vM',
     kpiSafety: '屈服安全系数 SF',
     kpiStrain: '峰值等效应变 ε_eq',
@@ -82,9 +82,9 @@ export const TRANSLATIONS = {
   },
   en: {
     pageTitle: 'F-16 Fighter Jet 3D Cloud FEM — Stress, Strain & Aero-Elasticity',
-    badge: 'F-16 1:1 CAD · Cloud 3D Tet FEM + OpenFOAM FSI',
+    badge: 'F-16 1:1 CAD · Cloud 3D Shell FEM + OpenFOAM FSI',
     title: 'F-16 Structural Cloud FEM',
-    subtitle: 'Gmsh 3D tetrahedral FEM + 1-way OpenFOAM aero-load · von Mises stress, strain & wing bend',
+    subtitle: '6-DOF stressed-skin shell FEM + 1-way OpenFOAM aero-load · von Mises stress & wing flex',
     sectionLoad: 'Maneuver Load & Airframe Alloy',
     presets: {
       pull9g: '9G Combat Pull-Up (7075-T6 Al)',
@@ -111,8 +111,8 @@ export const TRANSLATIONS = {
     warpScale: 'Deformation Exaggeration',
     showGhost: 'Overlay Undeformed Reference Wireframe',
     showMeshEdges: 'Show 3D FEM Mesh Edges',
-    showInternalSlice: 'Show Internal Wing-Spar Tet Slice',
-    footerNote: '100% Cloud Gmsh 3D Tet Mesh + Exact Ku=f FEM (Equivalent Wing-Box Stiffness)',
+    showInternalSlice: 'Highlight Wing-Box & Carry-Through Spar',
+    footerNote: '100% Cloud 3D Stressed-Skin Shell FEM (6-DOF CTRIA3 Elements · Exact Ku=f)',
     kpiStress: 'Peak von Mises Stress',
     kpiSafety: 'Yield Safety Factor',
     kpiStrain: 'Peak Equiv. Strain',

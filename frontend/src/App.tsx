@@ -38,7 +38,7 @@ export const App: React.FC = () => {
   const [params, setParams] = useState<F16FemParams>(DEFAULT_PARAMS);
   const [view, setView] = useState<F16FemViewState>({
     field: 'von_mises_mpa',
-    warpScale: 8.0,
+    warpScale: 2.0,
     playing: true,
     showGhost: true,
     showMeshEdges: false,
@@ -232,13 +232,13 @@ export const App: React.FC = () => {
           <label className="slider-row">
             <div className="slider-header">
               <span>{t.warpScale}</span>
-              <strong>{view.warpScale.toFixed(0)}×</strong>
+              <strong>{view.warpScale.toFixed(1)}×</strong>
             </div>
             <input
               type="range"
               min={0}
-              max={25}
-              step={1}
+              max={10}
+              step={0.5}
               value={view.warpScale}
               onChange={(e) => setView({ ...view, warpScale: Number(e.target.value) })}
             />
