@@ -134,6 +134,30 @@ function applyDeformation(mesh: DeformableMesh, scale: number) {
   mesh.poly.modified();
 }
 
+function computeActiveFieldRange(
+  poly: ReturnType<typeof vtkPolyData.newInstance>,
+  field: FemFieldId,
+  fallbackHi: number
+): [number, number] {
+  const arr = poly.getPointData().getArrayByName(field);
+  if (!arr) return [Math.max(0.1, fallbackHi * 0.01), fallbackHi];
+  const data = arr.getData() as Float32Array;
+  if (!data || data.length < 10) return [Math.max(0.1, fallbackHi * 0.01), fallbackHi];
+  const sorted = Array.from(data).sort((a, b) => a - b);
+  const n = sorted.length;
+  const hi = Math.max(sorted[Math.floor(n * 0.985)] ?? fallbackHi, 1e-3);
+  const threshold = hi * 0.01;
+  let lo = sorted[0];
+  for (let i = 0; i < n; i++) {
+    if (sorted[i] > threshold) {
+      lo = sorted[i];
+      break;
+    }
+  }
+  if (lo >= hi * 0.9) lo = hi * 0.05;
+  return [lo, hi];
+}
+
 export const F16FemViewer: React.FC<F16FemViewerProps> = ({
   lang,
   result,
@@ -152,20 +176,23 @@ export const F16FemViewer: React.FC<F16FemViewerProps> = ({
   const hasInitCam = useRef(false);
 
   const [meshStatus, setMeshStatus] = useState<string>('');
-  const [fieldMax, setFieldMax] = useState<number>(300);
+  const [fieldRange, setFieldRange] = useState<[number, number]>([1.5, 220]);
 
-  const getFieldRange = useCallback((res: F16FemSimResponse, field: FemFieldId): [number, number] => {
+  const getFieldFallbackHi = useCallback((res: F16FemSimResponse, field: FemFieldId): number => {
     const k = res.metrics.kpis;
-    if (field === 'von_mises_mpa') return [0, Math.max(20, k.max_von_mises_mpa)];
-    if (field === 'strain_micro') return [0, Math.max(100, k.max_strain_micro)];
-    return [0, Math.max(5, k.max_disp_mm)];
+    if (field === 'von_mises_mpa') return Math.max(20, k.max_von_mises_mpa);
+    if (field === 'strain_micro') return Math.max(100, k.max_strain_micro);
+    return Math.max(5, k.max_disp_mm);
   }, []);
 
   const applyView = useCallback(
     (s: SceneHandle, res: F16FemSimResponse, v: F16FemViewState) => {
       if (!s.dataLoaded) return;
-      const [lo, hi] = getFieldRange(res, v.field);
-      setFieldMax(hi);
+      const fallbackHi = getFieldFallbackHi(res, v.field);
+      const [lo, hi] = s.mesh
+        ? computeActiveFieldRange(s.mesh.poly, v.field, fallbackHi)
+        : [Math.max(0.1, fallbackHi * 0.01), fallbackHi];
+      setFieldRange([lo, hi]);
 
       const palCfg = v.palette === 'rainbow' ? RAINBOW_PALETTE : FIELD_PALETTES[v.field];
       applyStopsToLut(s.lut, palCfg.stops, lo, hi);
@@ -187,7 +214,7 @@ export const F16FemViewer: React.FC<F16FemViewerProps> = ({
 
       s.genericRW.getRenderWindow().render();
     },
-    [getFieldRange]
+    [getFieldFallbackHi]
   );
 
   const setCameraPreset = useCallback((preset: 'iso' | 'front' | 'top' | 'root') => {
@@ -473,9 +500,11 @@ export const F16FemViewer: React.FC<F16FemViewerProps> = ({
             </div>
             <div className="colorbar-strip" style={{ background: pal.css }} />
             <div className="colorbar-ticks">
-              <span>0</span>
-              <span>{(fieldMax * 0.5).toFixed(view.field === 'strain_micro' ? 0 : 1)}</span>
-              <span>{fieldMax.toFixed(view.field === 'strain_micro' ? 0 : 1)}</span>
+              {[0, 0.25, 0.5, 0.75, 1].map((f) => {
+                const val = fieldRange[0] + (fieldRange[1] - fieldRange[0]) * f;
+                const decimals = view.field === 'strain_micro' ? 0 : 1;
+                return <span key={f}>{val.toFixed(decimals)}</span>;
+              })}
             </div>
           </div>
         </div>
